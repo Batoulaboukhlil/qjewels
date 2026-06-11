@@ -106,10 +106,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeMount } from "vue";
-import { getAllAuctions } from '../../data/AuctionApi';
-import { fetchJewelById, getAllJewels } from '../../data/JewelApi';
+import { getAllAuctions } from '~/data/AuctionApi';
+import { fetchJewelById, getAllJewels } from '~/data/JewelApi';
 import { fetchJewelImage } from "~/data/JewelDataApiFetcher";
-import { getOrders } from "../../data/OrderApi";
+import { getOrders } from "~/data/OrderApi";
 import { getUserRole } from "~/utils/auth-utils";
 
 const activeOrders = ref([]);

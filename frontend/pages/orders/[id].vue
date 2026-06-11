@@ -12,43 +12,43 @@
       </div>
       <div class="bg-neutral rounded-lg flex flex-col justify-center items-center gap-4">
         <label class="w-full max-w-xs">
-          <div class="label">
+          <span class="label">
             <span class="label-text">Winner's email</span>
-          </div>
+          </span>
           <input type="text" :value="winner.email"
                  class="input input-bordered w-full max-w-xs cursor-pointer" readonly
                  @click="copyToClipboard($event, winner.email)"/>
         </label>
 
         <label class="form-control w-full max-w-xs">
-          <div class="label">
+          <span class="label">
             <span class="label-text">Winner's address</span>
-          </div>
+          </span>
           <input type="text" :value="`${winner.street}, ${winner.postalCode} ${winner.city}, ${winner.country}`"
                  class="input input-bordered w-full max-w-xs cursor-pointer" readonly
                  @click="copyToClipboard($event, `${winner.street}, ${winner.postalCode} ${winner.city}, ${winner.country}`)"/>
         </label>
 
         <label class="form-control w-full max-w-xs">
-          <div class="label">
+          <span class="label">
             <span class="label-text">Winner's phone number</span>
-          </div>
+          </span>
           <input type="text" :value="winner.phoneNumber"
                  class="input input-bordered w-full max-w-xs cursor-pointer" readonly
                  @click="copyToClipboard($event, winner.phoneNumber)"/>
         </label>
 
         <label class="form-control w-full max-w-xs">
-          <div class="label">
+          <span class="label">
             <span class="label-text">Order Status</span>
-          </div>
-          <div class="flex items-center gap-4">
+          </span>
+          <span class="flex items-center gap-4">
             <select v-model="currentStatus" class="select select-bordered w-full max-w-xs">
               <option v-for="status in statusOptions" :key="status" :value="status">
                 {{ status }}
               </option>
             </select>
-          </div>
+          </span>
         </label>
 
         <div class="flex gap-4 mt-4">
@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import BackButton from "~/components/BackButton.vue";
 import JewelItem from "~/components/JewelItem.vue";
 
@@ -79,25 +79,19 @@ const copiedMessage = ref("");
 const isTooltipVisible = ref(false);
 const tooltipPosition = reactive({ top: 0, left: 0 });
 
-const order = ref(null);
-const jewel = ref(null);
-const winner = ref(null);
+const order = ref<any>(null);
+const jewel = ref<any>(null);
+const winner = ref<any>(null);
 
-const currentStatus = computed({
-  get() {
-    return order.value ? order.value.status.toLowerCase() : 'pending';
-  },
-  set(newStatus) {
-    saveStatus(newStatus);
-  }
-});
+// Use a simple ref for the select v-model so changes don't auto-save.
+const currentStatus = ref('pending');
 
 const statusOptions = ["completed", "pending", "waiting"];
 
 onMounted(async () => {
   try {
     const orders = await getOrders();
-    order.value = orders.find(order => order.orderId === orderId);
+    order.value = orders.find((o: any) => o.orderId === orderId);
 
     if (!order.value) {
       throw new Error("Order not found");
@@ -105,6 +99,8 @@ onMounted(async () => {
 
     jewel.value = await fetchJewelById(order.value.jewelId);
     winner.value = await fetchUserById(order.value.userId);
+    // initialize select with the order status (normalize to lowercase)
+    currentStatus.value = order.value.status ? order.value.status.toLowerCase() : 'pending';
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -126,12 +122,13 @@ const copyToClipboard = (event: MouseEvent, value: string) => {
   });
 };
 
-const saveStatus = async (newStatus: string) => {
+const saveStatus = async (newStatus?: string | Event) => {
   try {
     if (order.value) {
+      const statusToSave = (typeof newStatus === 'string') ? newStatus : currentStatus.value;
       const updatedOrder = {
         ...order.value,
-        status: newStatus.toUpperCase()
+        status: statusToSave.toUpperCase()
       };
 
       await saveOrder(updatedOrder);

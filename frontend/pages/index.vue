@@ -43,6 +43,7 @@ onMounted(async () => {
       return;
     }
     auctionData.value = await getAllAuctions();
+    console.log(await getAllAuctions());
   } catch (err) {
     console.error('Error fetching auction data:', err);
   } finally {

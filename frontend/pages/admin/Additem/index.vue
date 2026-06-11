@@ -202,6 +202,7 @@ onMounted(async () => {
   try {
     types.value = await fetchJewelTypes();
     auctions.value = await getAllAuctions();
+    console.log("auctions" + auctions);
   } catch (error) {
     console.error("Error fetching form options:", error);
     alert("Error loading form options. Please try again.");

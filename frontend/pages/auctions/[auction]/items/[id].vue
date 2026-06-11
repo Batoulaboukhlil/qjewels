@@ -5,23 +5,30 @@ import { getCurrentLoggedInUser } from "~/data/ApiFetcher";
 import { placeAutoBid, placeBid } from "~/data/BidsApiFetcher";
 import { fetchJewelById } from "~/data/JewelApi";
 
-const router = useRouter();
 const currentIndex = ref(0);
 
+// Safe slide navigation: guard against jewel or empty image arrays
 const prevSlide = () => {
-  currentIndex.value = (currentIndex.value - 1 + jewel.value?.imageNames.length) % jewel.value?.imageNames.length;
+  const len = jewel.value && Array.isArray(jewel.value.imageNames) ? jewel.value.imageNames.length : 0;
+  if (!len) return;
+  currentIndex.value = (currentIndex.value - 1 + len) % len;
 };
 
 const nextSlide = () => {
-  currentIndex.value = (currentIndex.value + 1) % jewel.value?.imageNames.length;
+  const len = jewel.value && Array.isArray(jewel.value.imageNames) ? jewel.value.imageNames.length : 0;
+  if (!len) return;
+  currentIndex.value = (currentIndex.value + 1) % len;
 };
 
 const goToSlide = (index: number) => {
-  currentIndex.value = index;
+  const len = jewel.value && Array.isArray(jewel.value.imageNames) ? jewel.value.imageNames.length : 0;
+  if (!len) return;
+  currentIndex.value = index % len;
 };
 
 const handleBack = () => {
-  window.location.href = `/auctions/${jewel.value.auctionId}/items`;
+  if (!jewel.value) return;
+  window.location.href = `/auctions/${jewel.value!.auctionId}/items`;
 };
 
 interface WebSocketMessage {
@@ -31,6 +38,7 @@ interface WebSocketMessage {
 
 interface Jewel {
   jewelId: number;
+  auctionId: number;
   name: string;
   title: string;
   description: string;
@@ -142,13 +150,14 @@ onMounted(async () => {
   try {
     currentUser.value = await getCurrentLoggedInUser();
     const jewelId = parseInt(route.params.id as string);
-    const fetchedJewel = await fetchJewelById(jewelId);
-    
-    fetchedJewel.bids = fetchedJewel.bids.map(bid => ({
+    const fetchedJewel = await fetchJewelById(jewelId) as unknown as Jewel;
+
+    // API may return bids with a different shape (e.g. username). Cast to any to normalize safely.
+    fetchedJewel.bids = (fetchedJewel.bids as any[]).map((bid: any) => ({
       ...bid,
-      userName: bid.username || 'Unknown User'
+      userName: bid.username || bid.userName || 'Unknown User'
     }));
-    
+
     jewel.value = fetchedJewel;
 
     console.log(jewel)
@@ -244,8 +253,8 @@ async function handlePlaceBid(amount: string) {
 }
 
 async function handleAutoBid(amount: string) {
-  if (!jewel.value) return;
-  
+  if (!jewel.value || !currentUser.value) return;
+
   try {
     const numericAmount = parseFloat(amount);
     if (isNaN(numericAmount)) throw new Error("Invalid auto-bid amount");
@@ -253,7 +262,7 @@ async function handleAutoBid(amount: string) {
     await placeAutoBid({
       maxAmount: numericAmount,
       jewelId: jewel.value.jewelId,
-      userId: currentUser.value.id
+      userId: currentUser.value!.id
     });
     displayAlert('Auto-bid set successfully!', 'success');
   } catch (error) {

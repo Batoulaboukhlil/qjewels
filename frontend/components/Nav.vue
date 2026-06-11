@@ -18,6 +18,7 @@
       <ul class="menu menu-horizontal px-1 flex gap-3">
         <li><NuxtLink to="/">Home</NuxtLink></li>
         <li><NuxtLink to="/profile">Profile</NuxtLink></li>
+        <li><NuxtLink to="/about">About</NuxtLink></li>
         <li v-if="userRole === 'ADMIN'"><NuxtLink to="/admin">Admin</NuxtLink></li>
         <li v-if="userRole === 'ADMIN'"><NuxtLink to="/admin/additem">Add Jewel</NuxtLink></li>
         <li v-if="userRole === 'ADMIN'"><NuxtLink to="/admin/auctions">Add Auction</NuxtLink></li>
